@@ -2,17 +2,23 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = 'devops-app:latest'
+        CONTAINER_NAME = 'devops-container'
+    }
+
     stages {
+
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/Virendra-Balasaheb-Desai/ci-cd-pipeline.git'
+                checkout scm
             }
         }
 
         stage('Test') {
             steps {
-                sh 'python -m compileall -q app.py'
+                sh 'docker build -t devops-app:test .'
+                sh 'docker run --rm devops-app:test python -m compileall -q app.py'
             }
         }
 
@@ -31,6 +37,13 @@ pipeline {
                         -p 5000:5000 \
                         devops-app:latest
                 '''
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                sh 'docker ps'
+                sh 'docker logs devops-container'
             }
         }
     }

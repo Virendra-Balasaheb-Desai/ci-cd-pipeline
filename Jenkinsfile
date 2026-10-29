@@ -9,11 +9,18 @@ pipeline {
 
     stages {
 
-        stage('Build & Test') {
+        stage('Test') {
             steps {
-                echo 'Building test image and checking syntax...'
-                sh 'docker build -t ${IMAGE_NAME} .'
-                sh 'docker run --rm ${IMAGE_NAME} python -m compileall -q app.py'
+                echo 'Testing application...'
+                sh 'docker build -t devops-app:test .'
+                sh 'docker run --rm devops-app:test python -m compileall -q app.py'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker image...'
+                sh 'docker build -t devops-app:latest .'
             }
         }
 
@@ -21,11 +28,11 @@ pipeline {
             steps {
                 echo 'Deploying application container...'
                 sh '''
-                    docker rm -f ${CONTAINER_NAME} || true
+                    docker rm -f devops-container || true
                     docker run -d \
-                        --name ${CONTAINER_NAME} \
+                        --name devops-container \
                         -p 5000:5000 \
-                        ${IMAGE_NAME}
+                        devops-app:latest
                 '''
             }
         }
@@ -34,7 +41,7 @@ pipeline {
             steps {
                 echo 'Checking running containers and application logs...'
                 sh 'docker ps'
-                sh 'docker logs ${CONTAINER_NAME}'
+                sh 'docker logs devops-container'
             }
         }
     }
